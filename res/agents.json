@@ -1,0 +1,83 @@
+[
+  {
+    "balance_cents": 10000000,
+    "strategic_bets": [
+      {
+        "bet_value": {
+          "Number": "32"
+        },
+        "amount_cents": 1000,
+        "progression_factor": 2
+      },
+      {
+        "bet_value": {
+          "AdjacentNumbers": [
+            "6",
+            "9",
+            "5",
+            "8"
+          ]
+        },
+        "amount_cents": 500,
+        "progression_factor": 2
+      },
+      {
+        "bet_value": {
+          "Column": "Four"
+        },
+        "amount_cents": 500,
+        "progression_factor": 2
+      },
+      {
+        "bet_value": {
+          "Row": "Two"
+        },
+        "amount_cents": 500,
+        "progression_factor": 2
+      },
+      {
+        "bet_value": {
+          "DoubleColumn": [
+            "One",
+            "Two"
+          ]
+        },
+        "amount_cents": 500,
+        "progression_factor": 2
+      }
+    ]
+  },
+  {
+    "balance_cents": 10000000,
+    "strategic_bets": [
+      {
+        "bet_value": {
+          "Color": "Red"
+        },
+        "amount_cents": 500,
+        "progression_factor": 3
+      },
+      {
+        "bet_value": {
+          "EvenOdd": "Even"
+        },
+        "amount_cents": 500,
+        "progression_factor": 3
+      },
+      {
+        "bet_value": {
+          "Dozen": "One"
+        },
+        "amount_cents": 500,
+        "progression_factor": 3
+      },
+      {
+        "bet_value": {
+          "Half": "Two"
+        },
+        "amount_cents": 500,
+        "progression_factor": 2
+      }
+    ]
+  }
+]
