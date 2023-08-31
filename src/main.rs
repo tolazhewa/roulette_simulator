@@ -7,6 +7,8 @@ mod types;
 
 use std::{thread, time::Instant};
 
+use roulette::roulette_type::RouletteType;
+
 use crate::agent::agent::Agent;
 use crate::json_reader::json_reader::JsonReader;
 use crate::roulette::stats::Stats;
@@ -21,6 +23,7 @@ fn main() {
     let (mut game_config, mut agents) = get_json();
     let results: Vec<RouletteGame> = run(&mut game_config, &mut agents);
     let stats: Stats = Stats::from_games(&results);
+    println!("{}", results[0].board);
     println!("{}", stats);
     let duration = start.elapsed();
     println!("---------------------------");
@@ -54,7 +57,7 @@ fn run(game_config: &mut GameConfig, agents: &mut Vec<Agent>) -> Vec<RouletteGam
                     game_agents,
                     number_of_rounds,
                     allow_negative_balance,
-                    None,
+                    Some(RouletteType::European),
                 );
                 game.play();
                 return game;

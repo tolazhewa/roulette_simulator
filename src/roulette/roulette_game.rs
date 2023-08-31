@@ -27,9 +27,10 @@ impl RouletteGame {
         roulette_type: Option<RouletteType>,
     ) -> Self {
         let roulette_type = roulette_type.unwrap_or(RouletteType::European);
+        let board = Board::generate(&roulette_type);
         return RouletteGame {
             game_number,
-            board: Board::generate(&roulette_type),
+            board,
             agents,
             number_of_rounds,
             allow_negative_balance,

@@ -4,6 +4,7 @@ use crate::{
     types::{color::Color, column::Column, dozen::Dozen, even_odd::EvenOdd, half::Half, row::Row},
 };
 use core::fmt;
+use itertools::Itertools;
 use rand::{rngs::ThreadRng, Rng};
 use serde::{Deserialize, Serialize};
 use std::collections::{HashMap, HashSet};
@@ -15,66 +16,40 @@ pub struct Board {
 
 impl fmt::Display for Board {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
-        // Number of odds/evens
-        let number_of_evens = self
-            .slots
-            .iter()
-            .filter(|slot| slot.even_odd == EvenOdd::Even)
-            .count();
-        let number_of_odds = self
-            .slots
-            .iter()
-            .filter(|slot| slot.even_odd == EvenOdd::Odd)
-            .count();
-        let number_of_even_odd_zeros = self
-            .slots
-            .iter()
-            .filter(|slot| slot.even_odd == EvenOdd::Zero)
-            .count();
-        // Number of reds/blacks/greens
-        let number_of_reds = self
-            .slots
-            .iter()
-            .filter(|slot| slot.color == Color::Red)
-            .count();
-        let number_of_blacks = self
-            .slots
-            .iter()
-            .filter(|slot| slot.color == Color::Black)
-            .count();
-        let number_of_greens = self
-            .slots
-            .iter()
-            .filter(|slot| slot.color == Color::Green)
-            .count();
-        // Number of first/second/third dozen
-        let number_of_first_dozen = self
-            .slots
-            .iter()
-            .filter(|slot| slot.dozen == Dozen::One)
-            .count();
-        let number_of_second_dozen = self
-            .slots
-            .iter()
-            .filter(|slot| slot.dozen == Dozen::Two)
-            .count();
-        let number_of_third_dozen = self
-            .slots
-            .iter()
-            .filter(|slot| slot.dozen == Dozen::Three)
-            .count();
-        // Number of first/second half
-        let number_of_first_half = self
-            .slots
-            .iter()
-            .filter(|slot| slot.half == Half::One)
-            .count();
-        let number_of_second_half = self
-            .slots
-            .iter()
-            .filter(|slot| slot.half == Half::Two)
-            .count();
-        // Ensure all numbers are covered
+        let mut even_odd_to_count: HashMap<EvenOdd, usize> = HashMap::new();
+        let mut color_to_count: HashMap<Color, usize> = HashMap::new();
+        let mut dozen_to_count: HashMap<Dozen, usize> = HashMap::new();
+        let mut half_to_count: HashMap<Half, usize> = HashMap::new();
+        let mut row_to_count: HashMap<Row, usize> = HashMap::new();
+        let mut column_to_count: HashMap<Column, usize> = HashMap::new();
+        let mut s = String::new();
+
+        for slot in self.slots.iter() {
+            even_odd_to_count
+                .entry(slot.even_odd)
+                .and_modify(|size| *size += 1)
+                .or_insert(1);
+            color_to_count
+                .entry(slot.color)
+                .and_modify(|size| *size += 1)
+                .or_insert(1);
+            dozen_to_count
+                .entry(slot.dozen)
+                .and_modify(|size| *size += 1)
+                .or_insert(1);
+            half_to_count
+                .entry(slot.half)
+                .and_modify(|size| *size += 1)
+                .or_insert(1);
+            row_to_count
+                .entry(slot.row)
+                .and_modify(|size| *size += 1)
+                .or_insert(1);
+            column_to_count
+                .entry(slot.column)
+                .and_modify(|size| *size += 1)
+                .or_insert(1);
+        }
         let num_of_slot_numbers = self.slots.len();
         let mut numbers: HashSet<String> = HashSet::new();
         let mut has_dup = false;
@@ -86,31 +61,92 @@ impl fmt::Display for Board {
                 numbers.insert(slot.number.clone());
             }
         }
-        writeln!(f, "\nBOARD PROPERTIES\n")?;
-        writeln!(f, "Evens-Odds")?;
-        writeln!(f, "------------------------")?;
-        writeln!(f, "Number of evens: {}", number_of_evens)?;
-        writeln!(f, "Number of odds: {}", number_of_odds)?;
-        writeln!(f, "Number of zeros: {}\n", number_of_even_odd_zeros)?;
-        writeln!(f, "Colors")?;
-        writeln!(f, "------------------------")?;
-        writeln!(f, "Number of reds: {}", number_of_reds)?;
-        writeln!(f, "Number of blacks: {}", number_of_blacks)?;
-        writeln!(f, "Number of greens: {}\n", number_of_greens)?;
-        writeln!(f, "Dozens")?;
-        writeln!(f, "------------------------")?;
-        writeln!(f, "Number of first dozen: {}", number_of_first_dozen)?;
-        writeln!(f, "Number of second dozen: {}", number_of_second_dozen)?;
-        writeln!(f, "Number of third dozen: {}", number_of_third_dozen)?;
-        writeln!(f, "Halves")?;
-        writeln!(f, "------------------------")?;
-        writeln!(f, "Number of first: {}", number_of_first_half)?;
-        writeln!(f, "Number of second: {}", number_of_second_half)?;
-        writeln!(f, "Numbers")?;
-        writeln!(f, "------------------------")?;
-        writeln!(f, "Number of slot number: {}", num_of_slot_numbers)?;
-        writeln!(f, "All numbers are unique? {}\n", !has_dup)?;
-        return write!(f, "------------------------\n\n");
+        s.push_str("\nBOARD PROPERTIES\n\n");
+        s.push_str("Evens-Odd\n");
+        s.push_str("------------------------\n");
+        s.push_str(&format!(
+            "Number of {}: {}\n",
+            EvenOdd::Zero,
+            even_odd_to_count[&EvenOdd::Zero]
+        ));
+        s.push_str(&format!(
+            "Number of {}: {}\n",
+            EvenOdd::Even,
+            even_odd_to_count[&EvenOdd::Even]
+        ));
+        s.push_str(&format!(
+            "Number of {}: {}\n",
+            EvenOdd::Odd,
+            even_odd_to_count[&EvenOdd::Odd]
+        ));
+
+        s.push_str("\nColor\n");
+        s.push_str("------------------------\n");
+        s.push_str(&format!(
+            "Number of {}: {}\n",
+            Color::Green,
+            color_to_count[&Color::Green]
+        ));
+        s.push_str(&format!(
+            "Number of {}: {}\n",
+            Color::Red,
+            color_to_count[&Color::Red]
+        ));
+        s.push_str(&format!(
+            "Number of {}: {}\n",
+            Color::Black,
+            color_to_count[&Color::Black]
+        ));
+        s.push_str("\nDozen\n");
+        s.push_str("------------------------\n");
+        dozen_to_count
+            .iter()
+            .map(|(dozen, count)| (*dozen, *count))
+            .collect::<Vec<(Dozen, usize)>>()
+            .into_iter()
+            .sorted_by(|(dozen_a, _), (dozen_b, _)| dozen_a.value().cmp(&dozen_b.value()))
+            .for_each(|(dozen, count)| {
+                s.push_str(&format!("Number of {}: {}\n", dozen, count));
+            });
+        s.push_str("\nHalf\n");
+        s.push_str("------------------------\n");
+        half_to_count
+            .iter()
+            .map(|(half, count)| (*half, *count))
+            .collect::<Vec<(Half, usize)>>()
+            .into_iter()
+            .sorted_by(|(half_a, _), (half_b, _)| half_a.value().cmp(&half_b.value()))
+            .for_each(|(half, count)| {
+                s.push_str(&format!("Number of {}: {}\n", half, count));
+            });
+        s.push_str("\nRow\n");
+        s.push_str("------------------------\n");
+        row_to_count
+            .iter()
+            .map(|(row, count)| (*row, *count))
+            .collect::<Vec<(Row, usize)>>()
+            .into_iter()
+            .sorted_by(|(row_a, _), (row_b, _)| row_a.value().cmp(&row_b.value()))
+            .for_each(|(row, count)| {
+                s.push_str(&format!("Number of {}: {}\n", row, count));
+            });
+        s.push_str("\nColumn\n");
+        s.push_str("------------------------\n");
+        column_to_count
+            .iter()
+            .map(|(column, count)| (*column, *count))
+            .collect::<Vec<(Column, usize)>>()
+            .into_iter()
+            .sorted_by(|(column_a, _), (column_b, _)| column_a.value().cmp(&column_b.value()))
+            .for_each(|(column, count)| {
+                s.push_str(&format!("Number of {}: {}\n", column, count));
+            });
+        s.push_str("------------------------\n");
+        s.push_str("\nNumber\n");
+        s.push_str(&format!("Number of slot number: {}\n", num_of_slot_numbers));
+        s.push_str(&format!("All numbers are unique? {}\n", !has_dup));
+        s.push_str(&format!("------------------------\n\n"));
+        return write!(f, "{}", s);
     }
 }
 impl Board {

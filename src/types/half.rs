@@ -45,3 +45,13 @@ impl TryFrom<Value> for Half {
         return Ok(Half::from_str(half).unwrap());
     }
 }
+
+impl Half {
+    pub fn value(&self) -> i32 {
+        return match self {
+            Half::Zero => 0,
+            Half::One => 1,
+            Half::Two => 2,
+        };
+    }
+}

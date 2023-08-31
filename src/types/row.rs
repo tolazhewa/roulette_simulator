@@ -40,6 +40,17 @@ impl FromStr for Row {
     }
 }
 
+impl Row {
+    pub fn value(&self) -> i32 {
+        return match self {
+            Row::Zero => 0,
+            Row::One => 1,
+            Row::Two => 2,
+            Row::Three => 3,
+        };
+    }
+}
+
 impl TryFrom<Value> for Row {
     type Error = ();
 

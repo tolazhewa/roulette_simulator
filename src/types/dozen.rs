@@ -48,3 +48,14 @@ impl TryFrom<Value> for Dozen {
         return Ok(Dozen::from_str(dozen).unwrap());
     }
 }
+
+impl Dozen {
+    pub fn value(&self) -> i32 {
+        return match self {
+            Dozen::Zero => 0,
+            Dozen::One => 1,
+            Dozen::Two => 2,
+            Dozen::Three => 3,
+        };
+    }
+}
