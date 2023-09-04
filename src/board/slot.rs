@@ -8,7 +8,7 @@ use crate::types::{
 #[derive(Debug, PartialEq, Eq, Hash, Clone, Deserialize, Serialize)]
 pub struct Slot {
     pub color: Color,
-    pub number: String,
+    pub number: i8,
     pub even_odd: EvenOdd,
     pub dozen: Dozen,
     pub half: Half,

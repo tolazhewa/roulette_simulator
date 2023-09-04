@@ -23,7 +23,6 @@ fn main() {
     let (mut game_config, mut agents) = get_json();
     let results: Vec<RouletteGame> = run(&mut game_config, &mut agents);
     let stats: Stats = Stats::from_games(&results);
-    println!("{}", results[0].board);
     println!("{}", stats);
     let duration = start.elapsed();
     println!("---------------------------");

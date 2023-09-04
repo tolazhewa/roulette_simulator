@@ -51,7 +51,7 @@ impl fmt::Display for Board {
                 .or_insert(1);
         }
         let num_of_slot_numbers = self.slots.len();
-        let mut numbers: HashSet<String> = HashSet::new();
+        let mut numbers: HashSet<i8> = HashSet::new();
         let mut has_dup = false;
         for slot in self.slots.iter() {
             if numbers.contains(&slot.number) {
@@ -155,7 +155,7 @@ impl Board {
         let mut slots: Vec<Slot> = Vec::new();
         slots.push(Slot {
             color: Color::Green,
-            number: String::from("0"),
+            number: 0,
             even_odd: EvenOdd::Zero,
             dozen: Dozen::Zero,
             half: Half::Zero,
@@ -165,7 +165,7 @@ impl Board {
         if *roulette_type == RouletteType::American {
             slots.push(Slot {
                 color: Color::Green,
-                number: String::from("00"),
+                number: -1,
                 even_odd: EvenOdd::Zero,
                 dozen: Dozen::Zero,
                 half: Half::Zero,
@@ -181,7 +181,7 @@ impl Board {
             color_counter.entry(color).and_modify(|count| *count -= 1);
 
             let even_odd: EvenOdd = get_even_odd(n);
-            let number: String = n.to_string();
+            let number: i8 = n as i8;
             let dozen: Dozen = get_dozen(n);
             let half: Half = get_half(n);
             let row: Row = get_row(n);

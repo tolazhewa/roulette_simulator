@@ -15,7 +15,7 @@ pub enum BetValue {
     Dozen(Dozen),
     EvenOdd(EvenOdd),
     Half(Half),
-    Number(String),
+    Number(i8),
     Row(Row),
 }
 impl BetValue {
@@ -79,7 +79,7 @@ impl TryFrom<Value> for BetValue {
             "Dozen" => BetValue::Dozen(Dozen::try_from(bet_info.clone()).unwrap()),
             "EvenOdd" => BetValue::EvenOdd(EvenOdd::try_from(bet_info.clone()).unwrap()),
             "Half" => BetValue::Half(Half::try_from(bet_info.clone()).unwrap()),
-            "Number" => BetValue::Number(bet_info.as_str().unwrap().to_string()),
+            "Number" => BetValue::Number(bet_info.as_i64().unwrap() as i8),
             "Row" => BetValue::Row(Row::try_from(bet_info.clone()).unwrap()),
             _ => return Err(()),
         });
