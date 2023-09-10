@@ -3,7 +3,7 @@ use serde::{Deserialize, Serialize};
 use serde_json::Value;
 use std::str::FromStr;
 
-use crate::{error::Error, json::deserializable::Deserializable};
+use crate::{error::Error, json::deserializable::StringDeserializable};
 
 #[derive(Debug, PartialEq, Eq, Hash, Copy, Clone, Deserialize, Serialize)]
 pub enum EvenOdd {
@@ -51,6 +51,6 @@ impl TryFrom<Value> for EvenOdd {
     }
 }
 
-impl Deserializable for EvenOdd {
+impl StringDeserializable for EvenOdd {
     const NAME: &'static str = "EvenOdd";
 }

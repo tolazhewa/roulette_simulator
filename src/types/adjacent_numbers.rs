@@ -20,15 +20,20 @@ impl TryFrom<Value> for AdjacentNumbers {
         })?;
         let mut numbers_vec: Vec<i8> = Vec::new();
         for number in numbers {
-            numbers_vec.push(number.as_i64().ok_or(Error::DeserializatonError {
-                message: format!(
-                    "Value passed onto {}::try_from is not an array of integers",
-                    Self::NAME
-                ),
+            let num_str = number.as_str().ok_or(Error::DeserializatonError {
+                message: "Value passed onto BetValue::Number is not a valid string".to_string(),
                 de_str: None,
                 value: Some(value.clone()),
                 nested_error: None,
-            })? as i8);
+            })?;
+            if num_str == "00" {
+                numbers_vec.push(-1 as i8);
+            } else {
+                numbers_vec.push(num_str.parse::<i8>().map_err(|e| Error::GenericError {
+                    message: format!("Failed to parse {} as i8", num_str),
+                    nested_error: Some(Box::new(e)),
+                })?)
+            }
         }
         return Ok(AdjacentNumbers {
             numbers: numbers_vec,

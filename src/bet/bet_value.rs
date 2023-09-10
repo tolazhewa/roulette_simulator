@@ -99,12 +99,24 @@ impl TryFrom<Value> for BetValue {
             "Dozen" => BetValue::Dozen(Dozen::try_from(bet_info.clone())?),
             "EvenOdd" => BetValue::EvenOdd(EvenOdd::try_from(bet_info.clone())?),
             "Half" => BetValue::Half(Half::try_from(bet_info.clone())?),
-            "Number" => BetValue::Number(bet_info.as_i64().ok_or(Error::DeserializatonError {
-                message: "Value passed onto BetValue::Number is not a number".to_string(),
-                de_str: None,
-                value: Some(value.clone()),
-                nested_error: None,
-            })? as i8),
+            "Number" => {
+                let s = bet_info.as_str().ok_or(Error::DeserializatonError {
+                    message: "Value passed onto BetValue::Number is not a valid string".to_string(),
+                    de_str: None,
+                    value: Some(value.clone()),
+                    nested_error: None,
+                })?;
+                if s == "00" {
+                    return Ok(BetValue::Number(-1 as i8));
+                }
+                return s
+                    .parse::<i8>()
+                    .map_err(|e| Error::GenericError {
+                        message: format!("Failed to parse {} as i8", s),
+                        nested_error: Some(Box::new(e)),
+                    })
+                    .map(|n| BetValue::Number(n));
+            }
             "Row" => BetValue::Row(Row::try_from(bet_info.clone())?),
             _ => {
                 return Err(Error::DeserializatonError {

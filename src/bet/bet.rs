@@ -16,7 +16,8 @@ pub struct Bet {
 }
 
 impl Bet {
-    pub fn validate_bet(&mut self, roulette_type: &RouletteType) {
+    pub fn validate(&mut self, roulette_type: Option<&RouletteType>) {
+        let roulette_type = roulette_type.unwrap_or(&RouletteType::European);
         if self.bet_state != BetState::Active
             && self.amount_cents <= 0
             && self.initial_amount_cents <= 0

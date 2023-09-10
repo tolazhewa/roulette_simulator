@@ -23,14 +23,14 @@
             },
             {
                 "bet_value": {
-                    "Column": "Four"
+                    "Column": 4
                 },
                 "amount_cents": 500,
                 "progression_factor": 2
             },
             {
                 "bet_value": {
-                    "Row": "Two"
+                    "Row": 2
                 },
                 "amount_cents": 500,
                 "progression_factor": 2
@@ -38,8 +38,8 @@
             {
                 "bet_value": {
                     "DoubleColumn": [
-                        "One",
-                        "Two"
+                        1,
+                        2
                     ]
                 },
                 "amount_cents": 500,
@@ -66,14 +66,14 @@
             },
             {
                 "bet_value": {
-                    "Dozen": "One"
+                    "Dozen": 1
                 },
                 "amount_cents": 500,
                 "progression_factor": 3
             },
             {
                 "bet_value": {
-                    "Half": "Two"
+                    "Half": 2
                 },
                 "amount_cents": 500,
                 "progression_factor": 2

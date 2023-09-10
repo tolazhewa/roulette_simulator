@@ -210,7 +210,7 @@ impl RouletteGame {
                 .strategic_bets
                 .iter_mut()
                 .filter(|bet| bet.bet_state == BetState::Active)
-                .for_each(|bet| bet.validate_bet(&self.roulette_type))
+                .for_each(|bet| bet.validate(Some(&self.roulette_type)))
         });
     }
     fn allow_all_bets(&mut self) {

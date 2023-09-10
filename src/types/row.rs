@@ -3,8 +3,7 @@ use serde::{Deserialize, Serialize};
 use serde_json::Value;
 use std::str::FromStr;
 
-use crate::error::Error;
-use crate::json::deserializable::Deserializable;
+use crate::{error::Error, json::deserializable::I64Deserializable};
 
 #[derive(Debug, PartialEq, Eq, Hash, Copy, Clone, Deserialize, Serialize)]
 pub enum Row {
@@ -58,14 +57,27 @@ impl Row {
     }
 }
 
+impl I64Deserializable for Row {
+    const NAME: &'static str = "Row";
+
+    fn from_number(n: i64) -> Result<Self, Error> {
+        return match n {
+            0 => Ok(Row::Zero),
+            1 => Ok(Row::One),
+            2 => Ok(Row::Two),
+            3 => Ok(Row::Three),
+            _ => Err(Error::GenericError {
+                message: format!("{} is not a valid {}", n, Self::NAME),
+                nested_error: None,
+            }),
+        };
+    }
+}
+
 impl TryFrom<Value> for Row {
     type Error = Error;
 
     fn try_from(value: Value) -> Result<Self, Self::Error> {
         return Self::try_deserialize(value);
     }
-}
-
-impl Deserializable for Row {
-    const NAME: &'static str = "Row";
 }

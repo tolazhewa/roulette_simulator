@@ -3,7 +3,7 @@ use serde::{Deserialize, Serialize};
 use serde_json::Value;
 use std::str::FromStr;
 
-use crate::{error::Error, json::deserializable::Deserializable};
+use crate::{error::Error, json::deserializable::I64Deserializable};
 
 #[derive(Debug, PartialEq, Eq, Hash, Copy, Clone, Deserialize, Serialize)]
 pub enum Column {
@@ -56,27 +56,8 @@ impl FromStr for Column {
 }
 
 impl Column {
-    pub fn from_number(n: i8) -> Result<Self, Error> {
-        return match n {
-            0 => Ok(Column::Zero),
-            1 => Ok(Column::One),
-            2 => Ok(Column::Two),
-            3 => Ok(Column::Three),
-            4 => Ok(Column::Four),
-            5 => Ok(Column::Five),
-            6 => Ok(Column::Six),
-            7 => Ok(Column::Seven),
-            8 => Ok(Column::Eight),
-            9 => Ok(Column::Nine),
-            10 => Ok(Column::Ten),
-            11 => Ok(Column::Eleven),
-            12 => Ok(Column::Twelve),
-            _ => Err(Error::GenericError {
-                message: format!("{} is not a valid {}", n, Self::NAME),
-                nested_error: None,
-            }),
-        };
-    }
+    const NAME: &'static str = "Column";
+
     pub fn value(&self) -> i32 {
         return match self {
             Column::Zero => 0,
@@ -100,21 +81,32 @@ impl TryFrom<Value> for Column {
     type Error = Error;
 
     fn try_from(value: Value) -> Result<Self, Self::Error> {
-        let num = value.as_i64().ok_or(Error::DeserializatonError {
-            message: format!("Value passed onto {}::try_from is not a number", Self::NAME),
-            de_str: None,
-            value: Some(value.clone()),
-            nested_error: None,
-        })? as i8;
-        return Self::from_number(num).map_err(|e| Error::DeserializatonError {
-            message: format!("Error deserializing {}", Self::NAME),
-            de_str: None,
-            value: Some(value.clone()),
-            nested_error: Some(Box::new(e)),
-        });
+        return Self::try_deserialize(value);
     }
 }
 
-impl Deserializable for Column {
+impl I64Deserializable for Column {
     const NAME: &'static str = "Column";
+
+    fn from_number(n: i64) -> Result<Self, Error> {
+        return match n {
+            0 => Ok(Column::Zero),
+            1 => Ok(Column::One),
+            2 => Ok(Column::Two),
+            3 => Ok(Column::Three),
+            4 => Ok(Column::Four),
+            5 => Ok(Column::Five),
+            6 => Ok(Column::Six),
+            7 => Ok(Column::Seven),
+            8 => Ok(Column::Eight),
+            9 => Ok(Column::Nine),
+            10 => Ok(Column::Ten),
+            11 => Ok(Column::Eleven),
+            12 => Ok(Column::Twelve),
+            _ => Err(Error::GenericError {
+                message: format!("{} is not a valid {}", n, Self::NAME),
+                nested_error: None,
+            }),
+        };
+    }
 }

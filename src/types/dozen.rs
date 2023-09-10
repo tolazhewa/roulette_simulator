@@ -3,7 +3,7 @@ use serde::{Deserialize, Serialize};
 use serde_json::Value;
 use std::str::FromStr;
 
-use crate::{error::Error, json::deserializable::Deserializable};
+use crate::{error::Error, json::deserializable::I64Deserializable};
 
 #[derive(Debug, PartialEq, Eq, Hash, Copy, Clone, Deserialize, Serialize)]
 pub enum Dozen {
@@ -54,10 +54,21 @@ impl TryFrom<Value> for Dozen {
     }
 }
 
-impl Deserializable for Dozen {
+impl I64Deserializable for Dozen {
     const NAME: &'static str = "Dozen";
-}
 
+    fn from_number(n: i64) -> Result<Self, Error> {
+        return match n {
+            0 => Ok(Dozen::Zero),
+            1 => Ok(Dozen::One),
+            2 => Ok(Dozen::Two),
+            _ => Err(Error::GenericError {
+                message: format!("{} is not a valid {}", n, Self::NAME),
+                nested_error: None,
+            }),
+        };
+    }
+}
 impl Dozen {
     pub fn value(&self) -> i32 {
         return match self {

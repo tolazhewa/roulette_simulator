@@ -37,9 +37,9 @@ impl fmt::Display for Error {
                 nested_error,
             } => {
                 s.push_str(&format!("{}\n", message));
-                append_option(&mut s, de_str);
-                append_option(&mut s, value);
-                append_option(&mut s, nested_error);
+                append_option(&mut s, de_str, "Deserialization string");
+                append_option(&mut s, value, "Value");
+                append_option(&mut s, nested_error, "Nested error");
             }
             Error::FromStrError {
                 message,
@@ -47,15 +47,15 @@ impl fmt::Display for Error {
                 nested_error,
             } => {
                 s.push_str(&format!("{}\n", message));
-                s.push_str(&format!("{}\n", string));
-                append_option(&mut s, nested_error);
+                s.push_str(&format!("String: {}\n", string));
+                append_option(&mut s, nested_error, "Nested error");
             }
             Error::GenericError {
                 message,
                 nested_error,
             } => {
                 s.push_str(&format!("{}\n", message));
-                append_option(&mut s, nested_error);
+                append_option(&mut s, nested_error, "Nested error");
             }
             Error::ThreadJoinError {
                 message,
@@ -67,7 +67,7 @@ impl fmt::Display for Error {
                 }
             }
             Error::IOError(io_error) => {
-                s.push_str(&format!("{}\n", io_error));
+                s.push_str(&format!("IO Error: {}\n", io_error));
             }
         }
         return write!(f, "{}", s);
@@ -76,11 +76,11 @@ impl fmt::Display for Error {
 
 impl std::error::Error for Error {}
 
-fn append_option<T>(s: &mut String, op: &Option<T>)
+fn append_option<T>(s: &mut String, op: &Option<T>, prefix: &str)
 where
     T: fmt::Display,
 {
     if let Some(val) = op {
-        s.push_str(&format!("Nested Error: {}\n", val));
+        s.push_str(&format!("{}: {}\n", prefix, val));
     }
 }

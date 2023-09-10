@@ -104,14 +104,18 @@ impl JsonReader {
                     })?;
                 let bet_state: BetState = BetState::Active;
                 let bet_logs: Vec<BetLog> = Vec::new();
-                strategic_bets.push(Bet {
+                let mut bet = Bet {
                     bet_state,
                     bet_value,
                     amount_cents,
                     initial_amount_cents,
                     progression_factor,
                     bet_logs,
-                });
+                };
+                bet.validate(None);
+                if bet.bet_state == BetState::Active {
+                    strategic_bets.push(bet);
+                }
             }
             agents.push(Agent {
                 balance_cents,

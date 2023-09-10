@@ -1,6 +1,7 @@
 use super::slot::Slot;
 use crate::{
     error::Error,
+    json::deserializable::I64Deserializable,
     roulette::roulette_type::RouletteType,
     types::{color::Color, column::Column, dozen::Dozen, even_odd::EvenOdd, half::Half, row::Row},
 };
@@ -267,5 +268,5 @@ fn get_row(n: i32) -> Row {
 }
 
 fn get_column(n: i32) -> Result<Column, Error> {
-    return Column::from_number((((n - 1) / 3) + 1) as i8);
+    return Column::from_number((((n - 1) / 3) + 1) as i64);
 }

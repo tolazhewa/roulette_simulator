@@ -3,7 +3,7 @@ use serde::{Deserialize, Serialize};
 use serde_json::Value;
 use std::str::FromStr;
 
-use crate::{error::Error, json::deserializable::Deserializable};
+use crate::{error::Error, json::deserializable::I64Deserializable};
 
 #[derive(Debug, PartialEq, Eq, Hash, Copy, Clone, Deserialize, Serialize)]
 pub enum Half {
@@ -51,8 +51,20 @@ impl TryFrom<Value> for Half {
     }
 }
 
-impl Deserializable for Half {
+impl I64Deserializable for Half {
     const NAME: &'static str = "Half";
+
+    fn from_number(n: i64) -> Result<Self, Error> {
+        return match n {
+            0 => Ok(Half::Zero),
+            1 => Ok(Half::One),
+            2 => Ok(Half::Two),
+            _ => Err(Error::GenericError {
+                message: format!("Failed to convert {} to {}", n, Self::NAME),
+                nested_error: None,
+            }),
+        };
+    }
 }
 
 impl Half {
