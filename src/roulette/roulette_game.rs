@@ -4,6 +4,7 @@ use serde::{Deserialize, Serialize};
 use crate::agent::{agent::Agent, agent_log::AgentLog};
 use crate::bet::{bet_log::BetLog, bet_state::BetState, bet_value::BetValue};
 use crate::board::{board::Board, slot::Slot};
+use crate::error::Error;
 
 use super::{game_logs::GameLog, roulette_type::RouletteType};
 
@@ -25,10 +26,10 @@ impl RouletteGame {
         number_of_rounds: i32,
         allow_negative_balance: bool,
         roulette_type: Option<RouletteType>,
-    ) -> Self {
+    ) -> Result<Self, Error> {
         let roulette_type = roulette_type.unwrap_or(RouletteType::European);
-        let board = Board::generate(&roulette_type);
-        return RouletteGame {
+        let board = Board::generate(&roulette_type)?;
+        return Ok(RouletteGame {
             game_number,
             board,
             agents,
@@ -36,26 +37,28 @@ impl RouletteGame {
             allow_negative_balance,
             game_logs: Vec::new(),
             roulette_type,
-        };
+        });
     }
-    pub fn play(&mut self) {
+    pub fn play(&mut self) -> Result<(), Error> {
         self.validate_bets();
         self.consolidate_bets();
         for round_number in 1..=self.number_of_rounds {
-            self.play_round(round_number);
+            self.play_round(round_number)?;
         }
+        return Ok(());
     }
-    fn play_round(&mut self, round_number: i32) {
+    fn play_round(&mut self, round_number: i32) -> Result<(), Error> {
         if self.allow_negative_balance {
             self.allow_all_bets();
         } else {
             self.ensure_agent_funds();
         }
         self.collect_bets();
-        let winning_slot = self.spin();
+        let winning_slot = self.spin()?;
         self.determine_bet_results(&winning_slot);
         self.log_round(round_number, &winning_slot);
         self.play_agent_strategies();
+        return Ok(());
     }
     fn log_round(&mut self, round_number: i32, winning_slot: &Slot) {
         self.game_logs.push(GameLog {
@@ -181,9 +184,20 @@ impl RouletteGame {
                 });
         });
     }
-    fn spin(&mut self) -> Slot {
+    fn spin(&mut self) -> Result<Slot, Error> {
         let mut rng = rand::thread_rng();
-        return self.board.slots.choose(&mut rng).unwrap().clone();
+        return self
+            .board
+            .slots
+            .choose(&mut rng)
+            .ok_or(Error::GenericError {
+                message: format!(
+                    "Unable to choose a random slot from the board: {:?}",
+                    self.board,
+                ),
+                nested_error: None,
+            })
+            .cloned();
     }
     fn consolidate_bets(&mut self) {
         self.agents

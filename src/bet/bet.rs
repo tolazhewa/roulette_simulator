@@ -73,8 +73,18 @@ impl Bet {
 
         match num_count {
             2 => {
-                let smaller = numbers.iter().min().unwrap();
-                let larger = numbers.iter().max().unwrap();
+                let smaller;
+                let larger;
+                if let Some(min) = numbers.iter().min() {
+                    smaller = min;
+                } else {
+                    return false;
+                }
+                if let Some(max) = numbers.iter().max() {
+                    larger = max;
+                } else {
+                    return false;
+                }
                 if *smaller == -1 {
                     let possible_doubles: Vec<Vec<i8>> = vec![vec![-1, 3], vec![-1, 0]];
                     return possible_doubles.contains(numbers);
@@ -103,7 +113,11 @@ impl Bet {
                 }
             }
             4 => {
-                let min_num = *numbers.iter().min().unwrap();
+                let min_num = if let Some(min) = numbers.iter().min() {
+                    *min
+                } else {
+                    return false;
+                };
                 if min_num % 3 == 0 {
                     return false;
                 }

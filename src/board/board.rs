@@ -1,5 +1,6 @@
 use super::slot::Slot;
 use crate::{
+    error::Error,
     roulette::roulette_type::RouletteType,
     types::{color::Color, column::Column, dozen::Dozen, even_odd::EvenOdd, half::Half, row::Row},
 };
@@ -149,8 +150,9 @@ impl fmt::Display for Board {
         return write!(f, "{}", s);
     }
 }
+
 impl Board {
-    pub fn generate(roulette_type: &RouletteType) -> Self {
+    pub fn generate(roulette_type: &RouletteType) -> Result<Self, Error> {
         let mut rng = rand::thread_rng();
         let mut slots: Vec<Slot> = Vec::new();
         slots.push(Slot {
@@ -185,7 +187,7 @@ impl Board {
             let dozen: Dozen = get_dozen(n);
             let half: Half = get_half(n);
             let row: Row = get_row(n);
-            let column: Column = get_column(n);
+            let column: Column = get_column(n)?;
             slots.push(Slot {
                 color,
                 number,
@@ -196,7 +198,7 @@ impl Board {
                 column,
             });
         }
-        return Board { slots };
+        return Ok(Board { slots });
     }
 }
 
@@ -264,6 +266,6 @@ fn get_row(n: i32) -> Row {
     return row;
 }
 
-fn get_column(n: i32) -> Column {
-    return Column::from_number(((n - 1) / 3) + 1);
+fn get_column(n: i32) -> Result<Column, Error> {
+    return Column::from_number((((n - 1) / 3) + 1) as i8);
 }

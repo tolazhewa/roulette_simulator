@@ -3,6 +3,8 @@ use serde::{Deserialize, Serialize};
 use serde_json::Value;
 use std::str::FromStr;
 
+use crate::{error::Error, json::deserializable::Deserializable};
+
 #[derive(Debug, PartialEq, Eq, Hash, Copy, Clone, Deserialize, Serialize)]
 pub enum Half {
     Zero,
@@ -25,25 +27,32 @@ impl fmt::Display for Half {
 }
 
 impl FromStr for Half {
-    type Err = String;
+    type Err = Error;
 
     fn from_str(s: &str) -> Result<Self, Self::Err> {
         match s {
             "Zero" => Ok(Half::Zero),
             "One" => Ok(Half::One),
             "Two" => Ok(Half::Two),
-            _ => Err(format!("{} is not a valid half", s)),
+            _ => Err(Error::FromStrError {
+                message: format!("Failed to convert {} to {}", s, Self::NAME),
+                string: s.to_string(),
+                nested_error: None,
+            }),
         }
     }
 }
 
 impl TryFrom<Value> for Half {
-    type Error = ();
+    type Error = Error;
 
     fn try_from(value: Value) -> Result<Self, Self::Error> {
-        let half = value.as_str().unwrap();
-        return Ok(Half::from_str(half).unwrap());
+        return Self::try_deserialize(value);
     }
+}
+
+impl Deserializable for Half {
+    const NAME: &'static str = "Half";
 }
 
 impl Half {

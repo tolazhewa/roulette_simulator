@@ -3,6 +3,8 @@ use serde::{Deserialize, Serialize};
 use serde_json::Value;
 use std::str::FromStr;
 
+use crate::{error::Error, json::deserializable::Deserializable};
+
 #[derive(Debug, PartialEq, Eq, Hash, Copy, Clone, Deserialize, Serialize)]
 pub enum Column {
     Zero,
@@ -27,7 +29,7 @@ impl fmt::Display for Column {
 }
 
 impl FromStr for Column {
-    type Err = String;
+    type Err = Error;
 
     fn from_str(s: &str) -> Result<Self, Self::Err> {
         match s {
@@ -44,28 +46,35 @@ impl FromStr for Column {
             "Ten" => Ok(Column::Ten),
             "Eleven" => Ok(Column::Eleven),
             "Twelve" => Ok(Column::Twelve),
-            _ => Err(format!("{} is not a valid column", s)),
+            _ => Err(Error::FromStrError {
+                message: format!("Failed to convert {} to {}", s, Self::NAME),
+                string: s.to_string(),
+                nested_error: None,
+            }),
         }
     }
 }
 
 impl Column {
-    pub fn from_number(n: i32) -> Self {
+    pub fn from_number(n: i8) -> Result<Self, Error> {
         return match n {
-            0 => Column::Zero,
-            1 => Column::One,
-            2 => Column::Two,
-            3 => Column::Three,
-            4 => Column::Four,
-            5 => Column::Five,
-            6 => Column::Six,
-            7 => Column::Seven,
-            8 => Column::Eight,
-            9 => Column::Nine,
-            10 => Column::Ten,
-            11 => Column::Eleven,
-            12 => Column::Twelve,
-            _ => panic!("{} is not a valid column", n),
+            0 => Ok(Column::Zero),
+            1 => Ok(Column::One),
+            2 => Ok(Column::Two),
+            3 => Ok(Column::Three),
+            4 => Ok(Column::Four),
+            5 => Ok(Column::Five),
+            6 => Ok(Column::Six),
+            7 => Ok(Column::Seven),
+            8 => Ok(Column::Eight),
+            9 => Ok(Column::Nine),
+            10 => Ok(Column::Ten),
+            11 => Ok(Column::Eleven),
+            12 => Ok(Column::Twelve),
+            _ => Err(Error::GenericError {
+                message: format!("{} is not a valid {}", n, Self::NAME),
+                nested_error: None,
+            }),
         };
     }
     pub fn value(&self) -> i32 {
@@ -88,9 +97,24 @@ impl Column {
 }
 
 impl TryFrom<Value> for Column {
-    type Error = ();
+    type Error = Error;
 
     fn try_from(value: Value) -> Result<Self, Self::Error> {
-        return Ok(Column::from_str(value.as_str().unwrap()).unwrap());
+        let num = value.as_i64().ok_or(Error::DeserializatonError {
+            message: format!("Value passed onto {}::try_from is not a number", Self::NAME),
+            de_str: None,
+            value: Some(value.clone()),
+            nested_error: None,
+        })? as i8;
+        return Self::from_number(num).map_err(|e| Error::DeserializatonError {
+            message: format!("Error deserializing {}", Self::NAME),
+            de_str: None,
+            value: Some(value.clone()),
+            nested_error: Some(Box::new(e)),
+        });
     }
+}
+
+impl Deserializable for Column {
+    const NAME: &'static str = "Column";
 }

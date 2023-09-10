@@ -1,9 +1,12 @@
 use serde::{Deserialize, Serialize};
 use serde_json::Value;
 
-use crate::types::{
-    adjacent_numbers::AdjacentNumbers, color::Color, column::Column, double_column::DoubleColumn,
-    dozen::Dozen, even_odd::EvenOdd, half::Half, row::Row,
+use crate::{
+    error::Error,
+    types::{
+        adjacent_numbers::AdjacentNumbers, color::Color, column::Column,
+        double_column::DoubleColumn, dozen::Dozen, even_odd::EvenOdd, half::Half, row::Row,
+    },
 };
 
 #[derive(Debug, PartialEq, Eq, Hash, Clone, Serialize, Deserialize)]
@@ -19,6 +22,8 @@ pub enum BetValue {
     Row(Row),
 }
 impl BetValue {
+    const NAME: &'static str = "BetValue";
+
     pub fn get_type(&self) -> String {
         return String::from(match self {
             BetValue::AdjacentNumbers(_) => "Adjacent Numbers",
@@ -63,25 +68,53 @@ impl BetValue {
 }
 
 impl TryFrom<Value> for BetValue {
-    type Error = ();
+    type Error = Error;
 
     fn try_from(value: Value) -> Result<Self, Self::Error> {
-        let (bet_type, bet_info) = value.as_object().unwrap().iter().next().unwrap();
-        return Ok(match bet_type.as_str() {
+        let val_obj = value.as_object().ok_or(Error::DeserializatonError {
+            message: format!(
+                "Value passed onto {}::try_from is not an object",
+                Self::NAME
+            ),
+            de_str: None,
+            value: Some(value.clone()),
+            nested_error: None,
+        })?;
+        let (bet_type, bet_info) = val_obj.iter().next().ok_or(Error::DeserializatonError {
+            message: format!(
+                "Value passed onto {}::try_from is an empty object",
+                Self::NAME
+            ),
+            de_str: None,
+            value: Some(value.clone()),
+            nested_error: None,
+        })?;
+        let bet_value = match bet_type.as_str() {
             "AdjacentNumbers" => {
-                BetValue::AdjacentNumbers(AdjacentNumbers::try_from(bet_info.clone()).unwrap())
+                BetValue::AdjacentNumbers(AdjacentNumbers::try_from(bet_info.clone())?)
             }
-            "Color" => BetValue::Color(Color::try_from(bet_info.clone()).unwrap()),
-            "Column" => BetValue::Column(Column::try_from(bet_info.clone()).unwrap()),
-            "DoubleColumn" => {
-                BetValue::DoubleColumn(DoubleColumn::try_from(bet_info.clone()).unwrap())
+            "Color" => BetValue::Color(Color::try_from(bet_info.clone())?),
+            "Column" => BetValue::Column(Column::try_from(bet_info.clone())?),
+            "DoubleColumn" => BetValue::DoubleColumn(DoubleColumn::try_from(bet_info.clone())?),
+            "Dozen" => BetValue::Dozen(Dozen::try_from(bet_info.clone())?),
+            "EvenOdd" => BetValue::EvenOdd(EvenOdd::try_from(bet_info.clone())?),
+            "Half" => BetValue::Half(Half::try_from(bet_info.clone())?),
+            "Number" => BetValue::Number(bet_info.as_i64().ok_or(Error::DeserializatonError {
+                message: "Value passed onto BetValue::Number is not a number".to_string(),
+                de_str: None,
+                value: Some(value.clone()),
+                nested_error: None,
+            })? as i8),
+            "Row" => BetValue::Row(Row::try_from(bet_info.clone())?),
+            _ => {
+                return Err(Error::DeserializatonError {
+                    message: format!("Invalid bet type: {}", bet_type),
+                    de_str: None,
+                    value: Some(value.clone()),
+                    nested_error: None,
+                });
             }
-            "Dozen" => BetValue::Dozen(Dozen::try_from(bet_info.clone()).unwrap()),
-            "EvenOdd" => BetValue::EvenOdd(EvenOdd::try_from(bet_info.clone()).unwrap()),
-            "Half" => BetValue::Half(Half::try_from(bet_info.clone()).unwrap()),
-            "Number" => BetValue::Number(bet_info.as_i64().unwrap() as i8),
-            "Row" => BetValue::Row(Row::try_from(bet_info.clone()).unwrap()),
-            _ => return Err(()),
-        });
+        };
+        return Ok(bet_value);
     }
 }

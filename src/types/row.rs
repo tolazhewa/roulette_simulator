@@ -3,6 +3,9 @@ use serde::{Deserialize, Serialize};
 use serde_json::Value;
 use std::str::FromStr;
 
+use crate::error::Error;
+use crate::json::deserializable::Deserializable;
+
 #[derive(Debug, PartialEq, Eq, Hash, Copy, Clone, Deserialize, Serialize)]
 pub enum Row {
     Zero,
@@ -27,7 +30,7 @@ impl fmt::Display for Row {
 }
 
 impl FromStr for Row {
-    type Err = String;
+    type Err = Error;
 
     fn from_str(s: &str) -> Result<Self, Self::Err> {
         match s {
@@ -35,7 +38,11 @@ impl FromStr for Row {
             "One" => Ok(Row::One),
             "Two" => Ok(Row::Two),
             "Three" => Ok(Row::Three),
-            _ => Err(format!("{} is not a valid row", s)),
+            _ => Err(Error::FromStrError {
+                message: format!("Failed to convert {} to {}", s, Self::NAME),
+                string: s.to_string(),
+                nested_error: None,
+            }),
         }
     }
 }
@@ -52,10 +59,13 @@ impl Row {
 }
 
 impl TryFrom<Value> for Row {
-    type Error = ();
+    type Error = Error;
 
     fn try_from(value: Value) -> Result<Self, Self::Error> {
-        let row = value.as_str().unwrap();
-        return Ok(Row::from_str(row).unwrap());
+        return Self::try_deserialize(value);
     }
+}
+
+impl Deserializable for Row {
+    const NAME: &'static str = "Row";
 }
