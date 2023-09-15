@@ -4,14 +4,14 @@
     "strategic_bets": [
       {
         "bet_value": {
-          "Dozen": "One"
+          "Dozen": 1
         },
         "amount_cents": 500,
         "progression_factor": 3
       },
       {
         "bet_value": {
-          "Dozen": "Three"
+          "Dozen": 3
         },
         "amount_cents": 500,
         "progression_factor": 3

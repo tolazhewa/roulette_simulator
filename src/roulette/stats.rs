@@ -152,7 +152,7 @@ impl Stats {
                     *average_bet_win_percentage
                         .entry(agent.name.clone())
                         .or_insert(HashMap::new())
-                        .entry(BetHash::from(bet))
+                        .entry(bet.into())
                         .or_insert(0.0) += win_percentage;
                 }
             }
@@ -189,7 +189,7 @@ impl Stats {
                     *average_bet_income
                         .entry(agent.name.clone())
                         .or_insert(HashMap::new())
-                        .entry(BetHash::from(bet))
+                        .entry(bet.into())
                         .or_insert(0) += income_per_bet;
                 }
             }
@@ -215,20 +215,20 @@ impl Stats {
                 for bet in agent.strategic_bets.iter() {
                     let mut longest_loss_streak = 0;
                     let mut curr_loss_streak = 0;
-                    bet.bet_logs.iter().for_each(|bet_log| {
+                    for bet_log in bet.bet_logs.iter() {
                         if bet_log.bet_state == BetState::Lost {
                             curr_loss_streak += 1;
                         } else {
-                            if curr_loss_streak > longest_loss_streak {
-                                longest_loss_streak = curr_loss_streak;
-                            }
                             curr_loss_streak = 0;
                         }
-                    });
+                        if curr_loss_streak > longest_loss_streak {
+                            longest_loss_streak = curr_loss_streak;
+                        }
+                    }
                     let _ = *longest_loss_streak_pet_bet
                         .entry(agent.name.clone())
                         .or_insert(HashMap::new())
-                        .entry(BetHash::from(bet))
+                        .entry(bet.into())
                         .and_modify(|existing_streak| {
                             if longest_loss_streak > *existing_streak {
                                 *existing_streak = longest_loss_streak;
@@ -265,13 +265,13 @@ struct BetHash {
     initial_amount_cents: i64,
     progression_factor: i64,
 }
-impl From<&Bet> for BetHash {
-    fn from(bet: &Bet) -> Self {
-        return Self {
-            bet_type: bet.bet_value.get_type(),
-            bet_value: bet.bet_value.get_value_string(),
-            initial_amount_cents: bet.initial_amount_cents,
-            progression_factor: bet.progression_factor,
+impl Into<BetHash> for &Bet {
+    fn into(self) -> BetHash {
+        return BetHash {
+            bet_type: self.bet_value.get_type(),
+            bet_value: self.bet_value.get_value_string(),
+            initial_amount_cents: self.initial_amount_cents,
+            progression_factor: self.progression_factor,
         };
     }
 }

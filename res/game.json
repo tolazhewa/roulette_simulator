@@ -1,5 +1,5 @@
 {
-    "number_of_rounds": 1000,
-    "number_of_games": 3000,
+    "number_of_rounds": 30,
+    "number_of_games": 1,
     "allow_negative_balance": false
 }

@@ -7,13 +7,17 @@ mod roulette;
 mod types;
 
 use std::{thread, time::Instant};
-
-use error::Error;
+use tracing::{error, info};
+use tracing_appender::non_blocking::WorkerGuard;
+use tracing_appender::rolling::{RollingFileAppender, Rotation};
+use tracing_subscriber::filter::LevelFilter;
+use tracing_subscriber::{fmt, layer::SubscriberExt, registry::Registry};
 
 use crate::agent::agent::Agent;
 use crate::json::json_reader::JsonReader;
 use crate::roulette::stats::Stats;
 use crate::roulette::{game_configs::GameConfig, roulette_game::RouletteGame};
+use error::Error;
 
 const GAME_CONFIG_FILENAME: &str = "./res/game.json";
 const AGENTS_FILENAME: &str = "./res/agents.json";
@@ -30,8 +34,9 @@ struct BatchParams {
 
 fn main() {
     let start = Instant::now();
-    let (mut game_config, mut agents) = get_json();
-    let results = run(&mut game_config, &mut agents).unwrap_or_else(|error| {
+    let (file_guard, json_file_guard) = set_up_logging();
+    let (game_config, agents) = get_json();
+    let results = run(&game_config, &agents).unwrap_or_else(|error| {
         panic!(
             "Failed to run game:\n{:?}\n{:?}\n{}",
             game_config, agents, error
@@ -40,9 +45,11 @@ fn main() {
     let stats: Stats = Stats::from_games(&results);
     println!("{}", stats);
     let duration = start.elapsed();
-    println!("---------------------------");
-    println!("Time elapsed: {:?}", duration);
-    println!("---------------------------");
+    info!("---------------------------");
+    info!("Time elapsed: {:?}", duration);
+    info!("---------------------------");
+    drop(file_guard);
+    drop(json_file_guard);
 }
 
 fn get_json() -> (GameConfig, Vec<Agent>) {
@@ -58,7 +65,7 @@ fn get_json() -> (GameConfig, Vec<Agent>) {
     return (game_config, agents);
 }
 
-fn run(game_config: &mut GameConfig, agents: &mut Vec<Agent>) -> Result<Vec<RouletteGame>, Error> {
+fn run(game_config: &GameConfig, agents: &Vec<Agent>) -> Result<Vec<RouletteGame>, Error> {
     let mut game_results: Vec<RouletteGame> = Vec::new();
     let thread_batch_size = if THREAD_BATCH_SIZE < game_config.number_of_games {
         THREAD_BATCH_SIZE
@@ -127,13 +134,38 @@ fn run_batch(params: BatchParams) -> Vec<RouletteGame> {
             Ok(game_res) => match game_res {
                 Ok(game) => results.push(game),
                 Err(e) => {
-                    println!("Failed to run game: {:?}\n{}", params, e);
+                    error!("Failed to run game: {:?}\n{}", params, e);
                 }
             },
             Err(e) => {
-                println!("Failed to join thread: {:?}\n{}", params, e);
+                error!("Failed to join thread: {:?}\n{}", params, e);
             }
         }
     }
     return results;
+}
+
+fn set_up_logging() -> (WorkerGuard, WorkerGuard) {
+    let file_appender = RollingFileAppender::new(Rotation::DAILY, "./logs", "app.log");
+    let json_file_appender = RollingFileAppender::new(Rotation::DAILY, "./logs", "app.json");
+    let (non_blocking_file, file_guard) = tracing_appender::non_blocking(file_appender);
+    let (non_blocking_json_file, json_file_guard) =
+        tracing_appender::non_blocking(json_file_appender);
+
+    let stdout_layer = fmt::layer().with_writer(|| std::io::stdout());
+    let file_layer = fmt::layer().with_writer(move || non_blocking_file.clone());
+    let json_file_layer = fmt::layer()
+        .json()
+        .with_writer(move || non_blocking_json_file.clone());
+
+    let subscriber = Registry::default()
+        .with(stdout_layer)
+        .with(file_layer)
+        .with(json_file_layer)
+        .with(LevelFilter::TRACE);
+
+    tracing::subscriber::set_global_default(subscriber)
+        .expect("Unable to set global tracing subscriber");
+
+    return (file_guard, json_file_guard);
 }
