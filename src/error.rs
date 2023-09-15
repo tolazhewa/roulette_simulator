@@ -19,7 +19,7 @@ pub enum Error {
         message: String,
         nested_error: Option<Box<dyn std::error::Error + Send>>,
     },
-    ThreadJoinError {
+    JoinError {
         message: String,
         nested_error: Option<Box<dyn Any + Send>>,
     },
@@ -57,7 +57,7 @@ impl fmt::Display for Error {
                 s.push_str(&format!("{}\n", message));
                 append_option(&mut s, nested_error, "Nested error");
             }
-            Error::ThreadJoinError {
+            Error::JoinError {
                 message,
                 nested_error,
             } => {
