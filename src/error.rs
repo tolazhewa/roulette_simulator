@@ -23,7 +23,9 @@ pub enum Error {
         message: String,
         nested_error: Option<Box<dyn Any + Send>>,
     },
-    IOError(std::io::Error),
+    IOError {
+        nested_error: std::io::Error,
+    },
 }
 
 impl fmt::Display for Error {
@@ -66,7 +68,9 @@ impl fmt::Display for Error {
                     s.push_str(&format!("Nested Error: {:?}\n", e));
                 }
             }
-            Error::IOError(io_error) => {
+            Error::IOError {
+                nested_error: io_error,
+            } => {
                 s.push_str(&format!("IO Error: {}\n", io_error));
             }
         }

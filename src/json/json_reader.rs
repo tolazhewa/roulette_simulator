@@ -15,7 +15,8 @@ pub struct JsonReader {}
 
 impl JsonReader {
     pub fn read_game_json(game_config_path: &str) -> Result<GameConfig, Error> {
-        let mut file = File::open(game_config_path).map_err(|e| Error::IOError(e))?;
+        let mut file =
+            File::open(game_config_path).map_err(|e| Error::IOError { nested_error: e })?;
         let mut contents = String::new();
         let _ = file.read_to_string(&mut contents);
         let mut game_config: GameConfig =
@@ -32,7 +33,7 @@ impl JsonReader {
     }
 
     pub fn read_agents_json(agents_path: &str) -> Result<Vec<Agent>, Error> {
-        let mut file = File::open(agents_path).map_err(|e| Error::IOError(e))?;
+        let mut file = File::open(agents_path).map_err(|e| Error::IOError { nested_error: e })?;
         let mut contents = String::new();
         let _ = file.read_to_string(&mut contents);
         let agent_entries: Vec<Value> =
@@ -126,5 +127,34 @@ impl JsonReader {
             agent_number += 1;
         }
         return Ok(agents);
+    }
+}
+
+#[cfg(test)]
+mod test {
+    use super::JsonReader;
+
+    #[test]
+    fn test_game_json_reading_success() {
+        let result = JsonReader::read_game_json("./res/tst/game.json");
+        assert!(result.is_ok());
+    }
+
+    #[test]
+    fn test_game_json_reading_failure() {
+        let result = JsonReader::read_game_json("./res/tst/non_existing.json");
+        assert!(result.is_err());
+    }
+
+    #[test]
+    fn test_agent_json_reading_success() {
+        let result = JsonReader::read_agents_json("./res/tst/agents.json");
+        assert!(result.is_ok());
+    }
+
+    #[test]
+    fn test_agent_json_reading_failure() {
+        let result = JsonReader::read_agents_json("./res/tst/non_existing.json");
+        assert!(result.is_err());
     }
 }

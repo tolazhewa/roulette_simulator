@@ -130,3 +130,107 @@ impl TryFrom<Value> for BetValue {
         return Ok(bet_value);
     }
 }
+
+#[cfg(test)]
+mod test {
+    use serde_json::json;
+
+    use super::*;
+    #[test]
+    fn test_bet_value_get_type() {
+        assert_eq!(
+            BetValue::AdjacentNumbers(AdjacentNumbers {
+                numbers: vec![1, 2, 3]
+            })
+            .get_type(),
+            "Adjacent Numbers"
+        );
+        assert_eq!(BetValue::Color(Color::Red).get_type(), "Color");
+        assert_eq!(BetValue::Column(Column::One).get_type(), "Column");
+        assert_eq!(
+            BetValue::DoubleColumn(DoubleColumn {
+                columns: [Column::One, Column::Two]
+            })
+            .get_type(),
+            "DoubleColumn"
+        );
+        assert_eq!(BetValue::Dozen(Dozen::One).get_type(), "Dozen");
+        assert_eq!(BetValue::EvenOdd(EvenOdd::Even).get_type(), "EvenOdd");
+        assert_eq!(BetValue::Half(Half::One).get_type(), "Half");
+        assert_eq!(BetValue::Number(1).get_type(), "Number");
+        assert_eq!(BetValue::Row(Row::One).get_type(), "Row");
+    }
+
+    #[test]
+    fn test_try_from() {
+        assert_eq!(
+            BetValue::try_from(json!({"AdjacentNumbers": ["1", "2", "3"]})).unwrap(),
+            BetValue::AdjacentNumbers(AdjacentNumbers {
+                numbers: vec![1, 2, 3]
+            })
+        );
+        assert_eq!(
+            BetValue::try_from(json!({"Color": "Red"})).unwrap(),
+            BetValue::Color(Color::Red)
+        );
+        assert_eq!(
+            BetValue::try_from(json!({"Column": 1})).unwrap(),
+            BetValue::Column(Column::One)
+        );
+        assert_eq!(
+            BetValue::try_from(json!({"DoubleColumn": [1, 2]})).unwrap(),
+            BetValue::DoubleColumn(DoubleColumn {
+                columns: [Column::One, Column::Two]
+            })
+        );
+        assert_eq!(
+            BetValue::try_from(json!({"Dozen": 1})).unwrap(),
+            BetValue::Dozen(Dozen::One)
+        );
+        assert_eq!(
+            BetValue::try_from(json!({"EvenOdd": "Even"})).unwrap(),
+            BetValue::EvenOdd(EvenOdd::Even)
+        );
+        assert_eq!(
+            BetValue::try_from(json!({"Half": 1})).unwrap(),
+            BetValue::Half(Half::One)
+        );
+        assert_eq!(
+            BetValue::try_from(json!({"Number": "1"})).unwrap(),
+            BetValue::Number(1)
+        );
+        assert_eq!(
+            BetValue::try_from(json!({"Number": "00"})).unwrap(),
+            BetValue::Number(-1)
+        );
+        assert_eq!(
+            BetValue::try_from(json!({"Row": 1})).unwrap(),
+            BetValue::Row(Row::One)
+        );
+    }
+
+    #[test]
+    fn test_get_value_string() {
+        assert_eq!(
+            BetValue::AdjacentNumbers(AdjacentNumbers {
+                numbers: vec![1, 2, 3]
+            })
+            .get_value_string(),
+            "[1 2 3]"
+        );
+        assert_eq!(BetValue::Color(Color::Red).get_value_string(), "Red");
+        assert_eq!(BetValue::Column(Column::One).get_value_string(), "1");
+        assert_eq!(
+            BetValue::DoubleColumn(DoubleColumn {
+                columns: [Column::One, Column::Two]
+            })
+            .get_value_string(),
+            "[1 2]"
+        );
+        assert_eq!(BetValue::Dozen(Dozen::One).get_value_string(), "1");
+        assert_eq!(BetValue::EvenOdd(EvenOdd::Even).get_value_string(), "Even");
+        assert_eq!(BetValue::Half(Half::One).get_value_string(), "1");
+        assert_eq!(BetValue::Number(1).get_value_string(), "1");
+        assert_eq!(BetValue::Row(Row::One).get_value_string(), "1");
+    }
+}

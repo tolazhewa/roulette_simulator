@@ -76,3 +76,140 @@ impl Agent {
 fn bet_hash(bet: &Bet) -> String {
     return format!("{:?} {:?}", bet.bet_value, bet.progression_factor);
 }
+
+#[cfg(test)]
+mod test {
+    use crate::{bet::bet_value::BetValue, types::color::Color};
+
+    use super::*;
+    #[test]
+    fn test_consolidate_bets() {
+        let mut agent = Agent {
+            balance_cents: 100000,
+            name: String::from("Test Agent"),
+            strategic_bets: vec![
+                Bet {
+                    amount_cents: 1000,
+                    bet_logs: Vec::new(),
+                    bet_state: BetState::Active,
+                    bet_value: BetValue::Number(1),
+                    initial_amount_cents: 1000,
+                    progression_factor: 2,
+                },
+                Bet {
+                    amount_cents: 1000,
+                    bet_logs: Vec::new(),
+                    bet_state: BetState::Active,
+                    bet_value: BetValue::Number(1),
+                    initial_amount_cents: 1000,
+                    progression_factor: 2,
+                },
+            ],
+            agent_logs: Vec::new(),
+        };
+
+        agent.consolidate_bets();
+        assert_eq!(agent.strategic_bets.len(), 1);
+        assert_eq!(agent.strategic_bets[0].amount_cents, 2000);
+    }
+
+    #[test]
+    fn test_allow_all_bets() {
+        let mut agent = Agent {
+            balance_cents: 100000,
+            name: String::from("Test Agent"),
+            strategic_bets: vec![
+                Bet {
+                    amount_cents: 1000,
+                    bet_logs: Vec::new(),
+                    bet_state: BetState::Inactive,
+                    bet_value: BetValue::Number(1),
+                    initial_amount_cents: 1000,
+                    progression_factor: 2,
+                },
+                Bet {
+                    amount_cents: 1000,
+                    bet_logs: Vec::new(),
+                    bet_state: BetState::Active,
+                    bet_value: BetValue::Color(Color::Black),
+                    initial_amount_cents: 1000,
+                    progression_factor: 2,
+                },
+            ],
+            agent_logs: Vec::new(),
+        };
+
+        agent.allow_all_bets();
+        assert_eq!(agent.strategic_bets.len(), 2);
+        assert_eq!(agent.strategic_bets[0].bet_state, BetState::Active);
+        assert_eq!(agent.strategic_bets[1].bet_state, BetState::Active);
+    }
+
+    #[test]
+    fn test_determine_affordable_bets() {
+        let mut agent = Agent {
+            balance_cents: 100000,
+            name: String::from("Test Agent"),
+            strategic_bets: vec![
+                Bet {
+                    amount_cents: 1000,
+                    bet_logs: Vec::new(),
+                    bet_state: BetState::Inactive,
+                    bet_value: BetValue::Number(1),
+                    initial_amount_cents: 1000,
+                    progression_factor: 2,
+                },
+                Bet {
+                    amount_cents: 1000,
+                    bet_logs: Vec::new(),
+                    bet_state: BetState::Active,
+                    bet_value: BetValue::Color(Color::Black),
+                    initial_amount_cents: 1000,
+                    progression_factor: 2,
+                },
+            ],
+            agent_logs: Vec::new(),
+        };
+
+        agent.allow_all_bets();
+        assert_eq!(agent.strategic_bets.len(), 2);
+        assert_eq!(agent.strategic_bets[0].bet_state, BetState::Active);
+        assert_eq!(agent.strategic_bets[1].bet_state, BetState::Active);
+    }
+
+    #[test]
+    fn test_play_strategy() {
+        let mut agent = Agent {
+            balance_cents: 100000,
+            name: String::from("Test Agent"),
+            strategic_bets: vec![
+                Bet {
+                    amount_cents: 3500,
+                    bet_logs: Vec::new(),
+                    bet_state: BetState::Won,
+                    bet_value: BetValue::Number(1),
+                    initial_amount_cents: 3500,
+                    progression_factor: 2,
+                },
+                Bet {
+                    amount_cents: 5000,
+                    bet_logs: Vec::new(),
+                    bet_state: BetState::Lost,
+                    bet_value: BetValue::Color(Color::Black),
+                    initial_amount_cents: 5000,
+                    progression_factor: 2,
+                },
+            ],
+            agent_logs: Vec::new(),
+        };
+
+        agent.play_strategy();
+        assert_eq!(agent.strategic_bets.len(), 2);
+        let sum_of_amounts = agent
+            .strategic_bets
+            .iter()
+            .map(|bet| bet.amount_cents)
+            .sum::<i64>();
+        assert_eq!(sum_of_amounts, 13500);
+    }
+}

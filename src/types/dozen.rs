@@ -4,6 +4,8 @@ use serde::{Deserialize, Serialize};
 use serde_json::Value;
 use std::str::FromStr;
 
+use super::from_slot_number::FromSlotNumber;
+
 #[derive(Debug, PartialEq, Eq, Hash, Copy, Clone, Deserialize, Serialize)]
 pub enum Dozen {
     Zero,
@@ -76,6 +78,23 @@ impl Dozen {
             Dozen::One => 1,
             Dozen::Two => 2,
             Dozen::Three => 3,
+        };
+    }
+}
+
+impl FromSlotNumber for Dozen {
+    type Output = Dozen;
+
+    fn from_slot_number(n: i64) -> Result<Self::Output, Error> {
+        return match n {
+            -1..=0 => Ok(Dozen::Zero),
+            1..=12 => Ok(Dozen::One),
+            13..=24 => Ok(Dozen::Two),
+            25..=36 => Ok(Dozen::Three),
+            _ => Err(Error::GenericError {
+                message: format!("{} is not a valid slot number", n),
+                nested_error: None,
+            }),
         };
     }
 }

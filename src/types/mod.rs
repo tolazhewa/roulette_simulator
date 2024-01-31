@@ -4,5 +4,6 @@ pub mod column;
 pub mod double_column;
 pub mod dozen;
 pub mod even_odd;
+pub mod from_slot_number;
 pub mod half;
 pub mod row;

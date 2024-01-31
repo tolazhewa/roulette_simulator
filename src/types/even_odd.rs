@@ -5,6 +5,8 @@ use std::str::FromStr;
 
 use crate::{error::Error, json::deserializable::StringDeserializable};
 
+use super::from_slot_number::FromSlotNumber;
+
 #[derive(Debug, PartialEq, Eq, Hash, Copy, Clone, Deserialize, Serialize)]
 pub enum EvenOdd {
     Even,
@@ -53,4 +55,25 @@ impl TryFrom<Value> for EvenOdd {
 
 impl StringDeserializable for EvenOdd {
     const NAME: &'static str = "EvenOdd";
+}
+
+impl FromSlotNumber for EvenOdd {
+    type Output = EvenOdd;
+
+    fn from_slot_number(n: i64) -> Result<Self::Output, Error> {
+        return match n {
+            -1..=0 => Ok(EvenOdd::Zero),
+            1..=36 => {
+                if n % 2 == 0 {
+                    Ok(EvenOdd::Even)
+                } else {
+                    Ok(EvenOdd::Odd)
+                }
+            }
+            _ => Err(Error::GenericError {
+                message: format!("{} is not a valid slot number", n),
+                nested_error: None,
+            }),
+        };
+    }
 }

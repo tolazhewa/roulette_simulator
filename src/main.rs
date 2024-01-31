@@ -49,6 +49,7 @@ fn get_json() -> (GameConfig, Vec<Agent>) {
     });
     return (game_config, agents);
 }
+
 async fn run() {
     let (game_config, agents) = get_json();
     let mut results: Vec<RouletteGame> = Vec::new();

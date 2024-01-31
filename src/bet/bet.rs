@@ -37,10 +37,13 @@ impl Bet {
             BetValue::EvenOdd(_) => true,
             BetValue::Half(_) => true,
             BetValue::Number(number) => {
-                if *number == -1 && *roulette_type != RouletteType::American {
-                    false;
+                let n = *number;
+                let res;
+                if n == -1 && roulette_type == &RouletteType::American {
+                    res = true
+                } else {
+                    res = n >= 0 && n <= 36;
                 }
-                let res = *number >= -1 && *number <= 36;
                 res
             }
             BetValue::Row(_) => true,
@@ -76,59 +79,183 @@ impl Bet {
             2 => {
                 let smaller;
                 let larger;
-                if let Some(min) = numbers.iter().min() {
-                    smaller = min;
+                if numbers[0] < numbers[1] {
+                    smaller = numbers[0];
+                    larger = numbers[1];
                 } else {
-                    return false;
+                    smaller = numbers[1];
+                    larger = numbers[0];
                 }
-                if let Some(max) = numbers.iter().max() {
-                    larger = max;
-                } else {
-                    return false;
-                }
-                if *smaller == -1 {
-                    let possible_doubles: Vec<Vec<i8>> = vec![vec![-1, 3], vec![-1, 0]];
-                    return possible_doubles.contains(numbers);
-                } else if *smaller == 0 {
-                    if roulette_type == &RouletteType::American {
-                        return *larger == 1;
-                    } else {
-                        let possible_doubles: Vec<Vec<i8>> =
-                            vec![vec![0, 1], vec![0, 2], vec![0, 3]];
-                        return possible_doubles.contains(numbers);
+                if smaller == 0 || smaller == -1 {
+                    if *roulette_type == RouletteType::American {
+                        return *numbers == vec![-1, 3] || *numbers == vec![0, 1];
+                    } else if *roulette_type == RouletteType::European {
+                        return larger == 1 || larger == 2 || larger == 3;
                     }
                 }
                 if larger - smaller == 3 {
+                    // horizontal case
                     return true;
                 } else if larger - smaller == 1 {
-                    return (larger % 3 - smaller % 3).abs() <= 1;
-                } else {
-                    return false;
+                    // vertical case
+                    return (larger % 3 - smaller % 3).abs() == 1;
                 }
             }
             3 => {
-                let possible_triples: Vec<Vec<i8>> =
-                    vec![vec![0, 1, 2], vec![0, 2, 3], vec![-1, 0, 2], vec![-1, 2, 3]];
-                if !possible_triples.contains(&numbers) {
-                    return false;
+                if *roulette_type == RouletteType::American {
+                    return *numbers == vec![-1, 2, 3] || *numbers == vec![0, 1, 2];
+                } else if *roulette_type == RouletteType::European {
+                    return *numbers == vec![0, 2, 3] || *numbers == vec![0, 1, 2];
                 }
             }
             4 => {
-                let min_num = if let Some(min) = numbers.iter().min() {
-                    *min
-                } else {
-                    return false;
-                };
+                let min_num = *numbers.iter().min().unwrap();
                 if min_num % 3 == 0 {
                     return false;
                 }
-                let target_value: Vec<i8> = vec![min_num, min_num + 1, min_num + 3, min_num + 4];
-                if *numbers != target_value {
-                    return false;
+                if *numbers == vec![min_num, min_num + 1, min_num + 3, min_num + 4] {
+                    return true;
                 }
             }
             _ => return false,
         }
-        return true;
+        return false;
+    }
+}
+
+#[cfg(test)]
+mod test {
+    use super::*;
+    use crate::types::{
+        adjacent_numbers::AdjacentNumbers, column::Column, double_column::DoubleColumn,
+    };
+
+    fn create_test_bet(bet_value: BetValue) -> Bet {
+        Bet {
+            amount_cents: 1000,
+            bet_logs: Vec::new(),
+            bet_state: BetState::Active,
+            bet_value,
+            initial_amount_cents: 1000,
+            progression_factor: 2,
+        }
+    }
+
+    // Number
+    #[test]
+    fn test_validate_number_valid() {
+        let mut bet = create_test_bet(BetValue::Number(1));
+        bet.validate(Some(&RouletteType::European));
+        assert_eq!(bet.bet_state, BetState::Active);
+    }
+
+    #[test]
+    fn test_validate_number_double_zero_european() {
+        let mut bet = create_test_bet(BetValue::Number(-1));
+        bet.validate(Some(&RouletteType::European));
+        assert_eq!(bet.bet_state, BetState::Inactive);
+    }
+
+    #[test]
+    fn test_validate_number_double_zero_american() {
+        let mut bet = create_test_bet(BetValue::Number(-1));
+        bet.validate(Some(&RouletteType::American));
+        assert_eq!(bet.bet_state, BetState::Active);
+    }
+
+    #[test]
+    fn test_validate_number_less_than_range() {
+        let mut bet = create_test_bet(BetValue::Number(-2));
+        bet.validate(Some(&RouletteType::American));
+        assert_eq!(bet.bet_state, BetState::Inactive);
+    }
+
+    #[test]
+    fn test_validate_number_more_than_range() {
+        let mut bet = create_test_bet(BetValue::Number(37));
+        bet.validate(Some(&RouletteType::American));
+        assert_eq!(bet.bet_state, BetState::Inactive);
+    }
+
+    #[test]
+    fn test_validate_double_column_valid() {
+        let mut bet = create_test_bet(BetValue::DoubleColumn(DoubleColumn {
+            columns: [Column::One, Column::Two],
+        }));
+        bet.validate(Some(&RouletteType::American));
+        assert_eq!(bet.bet_state, BetState::Active);
+    }
+
+    #[test]
+    fn test_validate_double_column_invalid() {
+        let mut bet = create_test_bet(BetValue::DoubleColumn(DoubleColumn {
+            columns: [Column::One, Column::Three],
+        }));
+        bet.validate(Some(&RouletteType::American));
+        assert_eq!(bet.bet_state, BetState::Inactive);
+    }
+
+    #[test]
+    fn test_validate_adjacent_numbers_invalid_duo() {
+        let mut bet = create_test_bet(BetValue::AdjacentNumbers(AdjacentNumbers {
+            numbers: vec![1, 3],
+        }));
+        bet.validate(Some(&RouletteType::American));
+        assert_eq!(bet.bet_state, BetState::Inactive);
+    }
+
+    #[test]
+    fn test_validate_adjacent_numbers_invalid_triple() {
+        let mut bet = create_test_bet(BetValue::AdjacentNumbers(AdjacentNumbers {
+            numbers: vec![1, 2, 3],
+        }));
+        bet.validate(Some(&RouletteType::American));
+        assert_eq!(bet.bet_state, BetState::Inactive);
+    }
+
+    #[test]
+    fn test_validate_adjacent_numbers_invalid_quad() {
+        let mut bet = create_test_bet(BetValue::AdjacentNumbers(AdjacentNumbers {
+            numbers: vec![1, 2, 3, 4],
+        }));
+        bet.validate(Some(&RouletteType::American));
+        assert_eq!(bet.bet_state, BetState::Inactive);
+    }
+
+    #[test]
+    fn test_validate_adjacent_numbers_valid_american_invalid_european() {
+        let bet_value = BetValue::AdjacentNumbers(AdjacentNumbers {
+            numbers: vec![-1, 2, 3],
+        });
+        let mut american_bet = create_test_bet(bet_value.clone());
+        american_bet.validate(Some(&RouletteType::American));
+        assert_eq!(american_bet.bet_state, BetState::Active);
+
+        let mut european_bet = create_test_bet(bet_value);
+        european_bet.validate(Some(&RouletteType::European));
+        assert_eq!(european_bet.bet_state, BetState::Inactive);
+    }
+
+    #[test]
+    fn test_validate_adjacent_numbers_valid_european_invalid_american() {
+        let bet_value = BetValue::AdjacentNumbers(AdjacentNumbers {
+            numbers: vec![0, 2, 3],
+        });
+        let mut american_bet = create_test_bet(bet_value.clone());
+        american_bet.validate(Some(&RouletteType::American));
+        assert_eq!(american_bet.bet_state, BetState::Inactive);
+
+        let mut european_bet = create_test_bet(bet_value);
+        european_bet.validate(Some(&RouletteType::European));
+        assert_eq!(european_bet.bet_state, BetState::Active);
+    }
+
+    #[test]
+    fn test_validate_adjacent_numbers_repeat_numbers() {
+        let mut bet = create_test_bet(BetValue::AdjacentNumbers(AdjacentNumbers {
+            numbers: vec![1, 2, 2],
+        }));
+        bet.validate(Some(&RouletteType::American));
+        assert_eq!(bet.bet_state, BetState::Inactive);
     }
 }

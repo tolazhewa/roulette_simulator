@@ -5,6 +5,8 @@ use std::str::FromStr;
 
 use crate::{error::Error, json::deserializable::I64Deserializable};
 
+use super::from_slot_number::FromSlotNumber;
+
 #[derive(Debug, PartialEq, Eq, Hash, Copy, Clone, Deserialize, Serialize)]
 pub enum Column {
     Zero,
@@ -105,6 +107,21 @@ impl I64Deserializable for Column {
             12 => Ok(Column::Twelve),
             _ => Err(Error::GenericError {
                 message: format!("{} is not a valid {}", n, Self::NAME),
+                nested_error: None,
+            }),
+        };
+    }
+}
+
+impl FromSlotNumber for Column {
+    type Output = Column;
+
+    fn from_slot_number(n: i64) -> Result<Self::Output, Error> {
+        return match n {
+            -1..=0 => Ok(Column::Zero),
+            1..=36 => Self::from_number((((n - 1) / 3) + 1) as i64),
+            _ => Err(Error::GenericError {
+                message: format!("{} is not a valid slot number", n),
                 nested_error: None,
             }),
         };
