@@ -5,7 +5,7 @@ use std::str::FromStr;
 
 use crate::{error::Error, json::deserializable::StringDeserializable};
 
-use super::from_slot_number::FromSlotNumber;
+use super::slot_number::SlotNumber;
 
 #[derive(Debug, PartialEq, Eq, Hash, Copy, Clone, Deserialize, Serialize)]
 pub enum EvenOdd {
@@ -57,10 +57,10 @@ impl StringDeserializable for EvenOdd {
     const NAME: &'static str = "EvenOdd";
 }
 
-impl FromSlotNumber for EvenOdd {
-    type Output = EvenOdd;
+impl TryFrom<SlotNumber> for EvenOdd {
+    type Error = Error;
 
-    fn from_slot_number(n: i64) -> Result<Self::Output, Error> {
+    fn try_from(n: SlotNumber) -> Result<Self, Self::Error> {
         return match n {
             -1..=0 => Ok(EvenOdd::Zero),
             1..=36 => {
@@ -75,5 +75,62 @@ impl FromSlotNumber for EvenOdd {
                 nested_error: None,
             }),
         };
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use serde_json::json;
+
+    #[test]
+    fn test_try_from() {
+        let value = json!("Even");
+        assert_eq!(EvenOdd::try_from(value).unwrap(), EvenOdd::Even);
+    }
+
+    #[test]
+    fn test_try_from_zero() {
+        let value = json!("Zero");
+        assert_eq!(EvenOdd::try_from(value).unwrap(), EvenOdd::Zero);
+    }
+
+    #[test]
+    fn test_try_from_odd() {
+        let value = json!("Odd");
+        assert_eq!(EvenOdd::try_from(value).unwrap(), EvenOdd::Odd);
+    }
+
+    #[test]
+    fn test_try_from_invalid() {
+        let value = json!("Invalid");
+        assert!(EvenOdd::try_from(value).is_err());
+    }
+
+    #[test]
+    fn test_try_from_slot_number_zero() {
+        assert_eq!(EvenOdd::try_from(0).unwrap(), EvenOdd::Zero);
+    }
+
+    #[test]
+    fn test_try_from_slot_number_even() {
+        assert_eq!(EvenOdd::try_from(2).unwrap(), EvenOdd::Even);
+    }
+
+    #[test]
+    fn test_try_from_slot_number_odd() {
+        assert_eq!(EvenOdd::try_from(3).unwrap(), EvenOdd::Odd);
+    }
+
+    #[test]
+    fn test_try_from_slot_number_invalid() {
+        assert_eq!(
+            EvenOdd::try_from(37).unwrap_err().to_string(),
+            Error::GenericError {
+                message: "37 is not a valid slot number".to_string(),
+                nested_error: None,
+            }
+            .to_string()
+        );
     }
 }

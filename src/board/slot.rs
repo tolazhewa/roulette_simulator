@@ -3,12 +3,13 @@ use serde::{Deserialize, Serialize};
 
 use crate::types::{
     color::Color, column::Column, dozen::Dozen, even_odd::EvenOdd, half::Half, row::Row,
+    slot_number::SlotNumber,
 };
 
 #[derive(Debug, PartialEq, Eq, Hash, Clone, Deserialize, Serialize)]
 pub struct Slot {
     pub color: Color,
-    pub number: i8,
+    pub number: SlotNumber,
     pub even_odd: EvenOdd,
     pub dozen: Dozen,
     pub half: Half,

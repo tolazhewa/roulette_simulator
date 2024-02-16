@@ -5,7 +5,7 @@ use std::str::FromStr;
 
 use crate::{error::Error, json::deserializable::I64Deserializable};
 
-use super::from_slot_number::FromSlotNumber;
+use super::slot_number::SlotNumber;
 
 #[derive(Debug, PartialEq, Eq, Hash, Copy, Clone, Deserialize, Serialize)]
 pub enum Half {
@@ -79,10 +79,10 @@ impl Half {
     }
 }
 
-impl FromSlotNumber for Half {
-    type Output = Half;
+impl TryFrom<SlotNumber> for Half {
+    type Error = Error;
 
-    fn from_slot_number(n: i64) -> Result<Self::Output, Error> {
+    fn try_from(n: SlotNumber) -> Result<Self, Self::Error> {
         return match n {
             -1..=0 => Ok(Half::Zero),
             1..=18 => Ok(Half::One),
@@ -92,5 +92,32 @@ impl FromSlotNumber for Half {
                 nested_error: None,
             }),
         };
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use serde_json::json;
+
+    #[test]
+    fn test_try_from() {
+        let value = json!(2);
+        assert_eq!(Half::try_from(value).unwrap(), Half::Two);
+    }
+
+    #[test]
+    fn test_from_str() {
+        assert_eq!(Half::from_str("Two").unwrap(), Half::Two);
+    }
+
+    #[test]
+    fn test_from_number() {
+        assert_eq!(Half::from_number(2).unwrap(), Half::Two);
+    }
+
+    #[test]
+    fn test_try_from_slot_number() {
+        assert_eq!(Half::try_from(36).unwrap(), Half::Two);
     }
 }

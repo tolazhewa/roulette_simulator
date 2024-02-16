@@ -52,3 +52,24 @@ impl TryFrom<Value> for DoubleColumn {
         });
     }
 }
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use serde_json::json;
+
+    #[test]
+    fn test_try_from() {
+        let value = json!([0, 1]);
+        let double_column = DoubleColumn::try_from(value).unwrap();
+        assert_eq!(double_column.columns[0], Column::Zero);
+        assert_eq!(double_column.columns[1], Column::One);
+    }
+
+    #[test]
+    fn test_try_from_invalid() {
+        let value = json!(["Zero"]);
+        let double_column = DoubleColumn::try_from(value);
+        assert!(double_column.is_err());
+    }
+}

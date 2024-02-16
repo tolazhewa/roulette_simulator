@@ -3,8 +3,8 @@ use crate::{
     error::Error,
     roulette::roulette_type::RouletteType,
     types::{
-        color::Color, column::Column, dozen::Dozen, even_odd::EvenOdd,
-        from_slot_number::FromSlotNumber, half::Half, row::Row,
+        color::Color, column::Column, dozen::Dozen, even_odd::EvenOdd, half::Half, row::Row,
+        slot_number::SlotNumber,
     },
 };
 use core::fmt;
@@ -55,7 +55,7 @@ impl fmt::Display for Board {
                 .or_insert(1);
         }
         let num_of_slot_numbers = self.slots.len();
-        let mut numbers: HashSet<i8> = HashSet::new();
+        let mut numbers: HashSet<SlotNumber> = HashSet::new();
         let mut has_dup = false;
         for slot in self.slots.iter() {
             if numbers.contains(&slot.number) {
@@ -185,12 +185,12 @@ impl Board {
             let color: Color = get_color(&color_counter, &mut rng)?;
             color_counter.entry(color).and_modify(|count| *count -= 1);
 
-            let even_odd: EvenOdd = EvenOdd::from_slot_number(n)?;
-            let number: i8 = n as i8;
-            let dozen: Dozen = Dozen::from_slot_number(n)?;
-            let half: Half = Half::from_slot_number(n)?;
-            let row: Row = Row::from_slot_number(n)?;
-            let column: Column = Column::from_slot_number(n)?;
+            let even_odd: EvenOdd = EvenOdd::try_from(n)?;
+            let number: SlotNumber = n as SlotNumber;
+            let dozen: Dozen = Dozen::try_from(n)?;
+            let half: Half = Half::try_from(n)?;
+            let row: Row = Row::try_from(n)?;
+            let column: Column = Column::try_from(n)?;
             slots.push(Slot {
                 color,
                 number,
@@ -239,6 +239,7 @@ mod test {
     use crate::types::dozen::Dozen;
     use crate::types::half::Half;
     use crate::types::row::Row;
+    use crate::types::slot_number::SlotNumber;
     use crate::Error;
     use crate::{roulette::roulette_type::RouletteType, types::even_odd::EvenOdd};
 
@@ -335,7 +336,7 @@ mod test {
                 .or_insert(1);
         }
         let num_of_slot_numbers = board.slots.len();
-        let mut numbers: HashSet<i8> = HashSet::new();
+        let mut numbers: HashSet<SlotNumber> = HashSet::new();
         let mut has_dup = false;
         for slot in board.slots.iter() {
             assert!(slot.number >= 0 && slot.number <= 36);
@@ -414,7 +415,7 @@ mod test {
                 .or_insert(1);
         }
         let num_of_slot_numbers = board.slots.len();
-        let mut numbers: HashSet<i8> = HashSet::new();
+        let mut numbers: HashSet<SlotNumber> = HashSet::new();
         let mut has_dup = false;
         for slot in board.slots.iter() {
             assert!(slot.number >= -1 && slot.number <= 36);

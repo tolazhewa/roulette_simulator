@@ -5,7 +5,7 @@ use std::str::FromStr;
 
 use crate::{error::Error, json::deserializable::I64Deserializable};
 
-use super::from_slot_number::FromSlotNumber;
+use super::slot_number::SlotNumber;
 
 #[derive(Debug, PartialEq, Eq, Hash, Copy, Clone, Deserialize, Serialize)]
 pub enum Column {
@@ -58,8 +58,6 @@ impl FromStr for Column {
 }
 
 impl Column {
-    const NAME: &'static str = "Column";
-
     pub fn value(&self) -> i32 {
         return match self {
             Column::Zero => 0,
@@ -113,10 +111,10 @@ impl I64Deserializable for Column {
     }
 }
 
-impl FromSlotNumber for Column {
-    type Output = Column;
+impl TryFrom<SlotNumber> for Column {
+    type Error = Error;
 
-    fn from_slot_number(n: i64) -> Result<Self::Output, Error> {
+    fn try_from(n: SlotNumber) -> Result<Self, Self::Error> {
         return match n {
             -1..=0 => Ok(Column::Zero),
             1..=36 => Self::from_number((((n - 1) / 3) + 1) as i64),
@@ -125,5 +123,37 @@ impl FromSlotNumber for Column {
                 nested_error: None,
             }),
         };
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use serde_json::json;
+
+    #[test]
+    fn test_try_from() {
+        let value = json!(1);
+        assert_eq!(Column::try_from(value).unwrap(), Column::One);
+    }
+
+    #[test]
+    fn test_from_str() {
+        assert_eq!(Column::from_str("One").unwrap(), Column::One);
+    }
+
+    #[test]
+    fn test_from_number() {
+        assert_eq!(Column::from_number(1).unwrap(), Column::One);
+    }
+
+    #[test]
+    fn test_try_from_slot_number() {
+        assert_eq!(Column::try_from(1).unwrap(), Column::One);
+    }
+
+    #[test]
+    fn test_value() {
+        assert_eq!(Column::One.value(), 1);
     }
 }

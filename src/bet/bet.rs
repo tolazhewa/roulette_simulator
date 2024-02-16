@@ -1,7 +1,9 @@
 use itertools::Itertools;
 use serde::{Deserialize, Serialize};
 
-use crate::{roulette::roulette_type::RouletteType, types::color::Color};
+use crate::{
+    roulette::roulette_type::RouletteType, types::color::Color, types::slot_number::SlotNumber,
+};
 
 use super::{bet_log::BetLog, bet_state::BetState, bet_value::BetValue};
 
@@ -57,7 +59,11 @@ impl Bet {
         }
     }
 
-    fn validate_adjacent_numbers(&self, numbers: &Vec<i8>, roulette_type: &RouletteType) -> bool {
+    fn validate_adjacent_numbers(
+        &self,
+        numbers: &Vec<SlotNumber>,
+        roulette_type: &RouletteType,
+    ) -> bool {
         let num_count = numbers.len();
         let unique_numbers = numbers.iter().unique().count();
         if unique_numbers != num_count {

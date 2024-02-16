@@ -4,7 +4,7 @@ use serde::{Deserialize, Serialize};
 use serde_json::Value;
 use std::str::FromStr;
 
-use super::from_slot_number::FromSlotNumber;
+use super::slot_number::SlotNumber;
 
 #[derive(Debug, PartialEq, Eq, Hash, Copy, Clone, Deserialize, Serialize)]
 pub enum Dozen {
@@ -82,10 +82,10 @@ impl Dozen {
     }
 }
 
-impl FromSlotNumber for Dozen {
-    type Output = Dozen;
+impl TryFrom<SlotNumber> for Dozen {
+    type Error = Error;
 
-    fn from_slot_number(n: i64) -> Result<Self::Output, Error> {
+    fn try_from(n: SlotNumber) -> Result<Self, Self::Error> {
         return match n {
             -1..=0 => Ok(Dozen::Zero),
             1..=12 => Ok(Dozen::One),
@@ -96,5 +96,32 @@ impl FromSlotNumber for Dozen {
                 nested_error: None,
             }),
         };
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use serde_json::json;
+
+    #[test]
+    fn test_try_from() {
+        let value = json!(0);
+        assert_eq!(Dozen::try_from(value).unwrap(), Dozen::Zero);
+    }
+
+    #[test]
+    fn test_from_str() {
+        assert_eq!(Dozen::from_str("Zero").unwrap(), Dozen::Zero);
+    }
+
+    #[test]
+    fn test_from_number() {
+        assert_eq!(Dozen::from_number(0).unwrap(), Dozen::Zero);
+    }
+
+    #[test]
+    fn test_value() {
+        assert_eq!(Dozen::Zero.value(), 0);
     }
 }

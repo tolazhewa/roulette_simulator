@@ -54,3 +54,20 @@ impl TryFrom<Value> for Color {
 impl StringDeserializable for Color {
     const NAME: &'static str = "Row";
 }
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use serde_json::json;
+
+    #[test]
+    fn test_try_from() {
+        let value = json!("Red");
+        assert_eq!(Color::try_from(value).unwrap(), Color::Red);
+    }
+
+    #[test]
+    fn test_from_str() {
+        assert_eq!(Color::from_str("Red").unwrap(), Color::Red);
+    }
+}
