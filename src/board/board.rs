@@ -234,13 +234,13 @@ fn get_color(color_counter: &HashMap<Color, i32>, rng: &mut ThreadRng) -> Result
 mod test {
     use std::collections::{HashMap, HashSet};
 
+    use crate::error::Error;
     use crate::types::color::Color;
     use crate::types::column::Column;
     use crate::types::dozen::Dozen;
     use crate::types::half::Half;
     use crate::types::row::Row;
     use crate::types::slot_number::SlotNumber;
-    use crate::Error;
     use crate::{roulette::roulette_type::RouletteType, types::even_odd::EvenOdd};
 
     use super::{get_color, Board};

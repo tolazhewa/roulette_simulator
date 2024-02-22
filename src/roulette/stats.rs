@@ -1,17 +1,53 @@
 use core::fmt;
 use prettytable::{Cell, Row, Table};
-use serde::{Deserialize, Serialize};
+use serde::{ser::SerializeMap, Deserialize, Serialize, Serializer};
 use std::collections::HashMap;
 
 use super::roulette_game::RouletteGame;
 use crate::bet::{bet::Bet, bet_state::BetState};
 
-#[derive(Debug, PartialEq, Clone, Serialize, Deserialize)]
+#[derive(Debug, PartialEq, Clone, Deserialize)]
 pub struct Stats {
     average_agent_balances: HashMap<String, i64>,
     average_bet_win_percentage: HashMap<String, HashMap<BetHash, f64>>,
     average_bet_income: HashMap<String, HashMap<BetHash, i64>>,
     longest_loss_streak_pet_bet: HashMap<String, HashMap<BetHash, i64>>,
+}
+impl serde::Serialize for Stats {
+    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
+    where
+        S: Serializer,
+    {
+        let mut map = serializer.serialize_map(Some(2))?;
+        let serialized_bet_statistics: HashMap<BetHash, SerializedBetStats> = self
+            .average_bet_win_percentage
+            .iter()
+            .map(|(agent_name, bet_win_percentages)| {
+                bet_win_percentages
+                    .iter()
+                    .map(|(bet_hash, win_percentage)| {
+                        (
+                            bet_hash.clone(),
+                            SerializedBetStats {
+                                agent_name: agent_name.clone(),
+                                bet_type: bet_hash.bet_type.clone(),
+                                bet_value: bet_hash.bet_value.clone(),
+                                progression_factor: bet_hash.progression_factor,
+                                win_percentage: *win_percentage,
+                                average_bet_income: self.average_bet_income[agent_name][bet_hash],
+                                longest_loss_streak: self.longest_loss_streak_pet_bet[agent_name]
+                                    [bet_hash],
+                            },
+                        )
+                    })
+                    .collect::<HashMap<BetHash, SerializedBetStats>>()
+            })
+            .flatten()
+            .collect();
+        map.serialize_entry("average_agent_balances", &self.average_agent_balances)?;
+        map.serialize_entry("bet_statistics", &serialized_bet_statistics)?;
+        map.end()
+    }
 }
 
 impl fmt::Display for Stats {
@@ -258,7 +294,7 @@ impl Stats {
     }
 }
 
-#[derive(Debug, PartialEq, Hash, Clone, Serialize, Deserialize, Eq)]
+#[derive(Debug, PartialEq, Hash, Clone, Deserialize, Eq)]
 struct BetHash {
     bet_type: String,
     bet_value: String,
@@ -267,26 +303,43 @@ struct BetHash {
 }
 impl From<Bet> for BetHash {
     fn from(bet: Bet) -> Self {
-        return BetHash {
-            bet_type: bet.bet_value.get_type(),
-            bet_value: bet.bet_value.get_value_string(),
-            initial_amount_cents: bet.initial_amount_cents,
-            progression_factor: bet.progression_factor,
-        };
+        BetHash::from(&bet)
     }
 }
 impl From<&Bet> for BetHash {
     fn from(bet: &Bet) -> Self {
-        return BetHash {
+        BetHash {
             bet_type: bet.bet_value.get_type(),
             bet_value: bet.bet_value.get_value_string(),
             initial_amount_cents: bet.initial_amount_cents,
             progression_factor: bet.progression_factor,
-        };
+        }
+    }
+}
+impl Serialize for BetHash {
+    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
+    where
+        S: Serializer,
+    {
+        let key = format!(
+            "{}_{}_{}_{}",
+            self.bet_type, self.bet_value, self.initial_amount_cents, self.progression_factor
+        );
+        serializer.serialize_str(&key)
     }
 }
 
-// Write tests for all the functions
+#[derive(Serialize)]
+struct SerializedBetStats {
+    agent_name: String,
+    bet_type: String,
+    bet_value: String,
+    progression_factor: i64,
+    win_percentage: f64,
+    average_bet_income: i64,
+    longest_loss_streak: i64,
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;

@@ -1,11 +1,10 @@
-use serde::{Deserialize, Serialize};
 use serde_json::Value;
 
 use crate::error::Error;
 
 use super::slot_number::SlotNumber;
 
-#[derive(Debug, PartialEq, Eq, Hash, Clone, Deserialize, Serialize)]
+#[derive(Debug, PartialEq, Eq, Hash, Clone, serde::Deserialize, serde::Serialize)]
 pub struct AdjacentNumbers {
     pub numbers: Vec<SlotNumber>,
 }
